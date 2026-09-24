@@ -12,6 +12,7 @@
 # Run it with:  uvicorn app.main:app --reload
 
 import logging
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
@@ -22,12 +23,17 @@ from app.chatbot import get_reply
 from app.database import get_connection, setup_database
 
 # ---------- Logs: the app's diary ----------
-LOG_FILE = Path(__file__).parent.parent / "logs" / "app.log"
+# On Vercel, the project folder is read-only, so logs go to /tmp
+# and also to the screen (you can read them in Vercel's "Logs" tab).
+if os.getenv("VERCEL"):
+    LOG_FILE = Path("/tmp/app.log")
+else:
+    LOG_FILE = Path(__file__).parent.parent / "logs" / "app.log"
 LOG_FILE.parent.mkdir(exist_ok=True)
 logging.basicConfig(
-    filename=LOG_FILE,
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
 )
 log = logging.getLogger("shopbot")
 

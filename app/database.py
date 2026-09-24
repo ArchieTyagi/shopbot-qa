@@ -1,10 +1,15 @@
 # database.py
 # Creates a small SQLite database (a single file: shop.db) and fills it with sample data.
 
+import os
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "shop.db"
+# On Vercel, the project folder is read-only. Only /tmp can be written to.
+if os.getenv("VERCEL"):
+    DB_PATH = Path("/tmp/shop.db")
+else:
+    DB_PATH = Path(__file__).parent.parent / "shop.db"
 
 
 def get_connection():
