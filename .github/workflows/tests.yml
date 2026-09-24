@@ -24,6 +24,10 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run all tests
+        env:
+          # Add your key in GitHub: Settings > Secrets and variables > Actions > New secret.
+          # Without it, the chatbot runs in simple rules mode and the AI-only tests are skipped.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: pytest
 
       - name: Save the app logs (useful when a test fails)

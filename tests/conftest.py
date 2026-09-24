@@ -48,6 +48,19 @@ def base_url():
     return BASE_URL
 
 
+@pytest.fixture(scope="session")
+def chat_mode():
+    """'ai' if the bot uses Gemini, 'rules' if it uses the simple rule-based bot."""
+    return requests.get(BASE_URL + "/chat/mode").json()["mode"]
+
+
+def ask(message):
+    """Send a message to the chatbot and return its reply (commas removed, so 1,499 == 1499)."""
+    res = requests.post(BASE_URL + "/chat", json={"message": message}, timeout=120)
+    assert res.status_code == 200
+    return res.json()["reply"].replace(",", "")
+
+
 @pytest.fixture
 def token(base_url):
     """Log in and return a token, for tests that need a logged-in user."""

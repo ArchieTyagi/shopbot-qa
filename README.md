@@ -1,6 +1,6 @@
 # ShopBot QA
 
-A small online shop with an AI-style chatbot, and a full **automated test suite** for it.
+A small online shop with an AI chatbot (Google Gemini), and a full **automated test suite** for it.
 
 This project shows the complete flow of a test automation engineer:
 web UI testing, REST API testing, chatbot testing, database checks, log checks, and CI/CD.
@@ -11,13 +11,16 @@ web UI testing, REST API testing, chatbot testing, database checks, log checks, 
 shopbot-qa/
 ├── app/                         <- the app we are testing
 │   ├── main.py                  <- backend: REST API (login, products, orders, chat)
-│   ├── chatbot.py               <- shop assistant chatbot
+│   ├── chatbot.py               <- chatbot: guardrails, then Gemini AI (or simple rules)
+│   ├── llm.py                   <- talks to the Gemini API
 │   ├── database.py              <- SQLite database with sample products
 │   └── static/index.html        <- frontend: the web page
 ├── tests/                       <- the tests (this is the real work)
 │   ├── conftest.py              <- setup: starts the server, resets the database
 │   ├── test_api.py              <- REST API tests (10 tests)
-│   ├── test_chatbot.py          <- chatbot / GenAI tests (15 tests)
+│   ├── test_chatbot.py          <- chatbot tests that pass in AI and rules mode (15 tests)
+│   ├── test_ai_quality.py       <- real AI tests: hallucination, consistency, LLM-as-judge (9 tests)
+│   ├── llm_judge.py             <- a second AI that grades the chatbot's answers
 │   ├── test_database_and_logs.py<- SQL and log checks (3 tests)
 │   └── test_ui_selenium.py      <- browser tests with Selenium (4 tests)
 ├── postman_collection.json      <- same API tests, for Postman
@@ -49,6 +52,27 @@ pytest tests/test_chatbot.py
 pytest tests/test_ui_selenium.py      # you will SEE Chrome open and click by itself
 ```
 
+## Turning on the real AI (Gemini)
+
+1. Get a free API key at https://aistudio.google.com/apikey
+2. Set it in your terminal before starting the app or running tests:
+   ```bash
+   export GEMINI_API_KEY="your-key-here"
+   ```
+3. Start the app. The chat box now says **(powered by Gemini AI)**.
+
+Without a key, the chatbot uses simple rules and the AI-only tests are skipped, so nothing breaks.
+
+How a chat message flows:
+
+```
+user message -> guardrails (block tricks and harmful requests)
+             -> Gemini, given the REAL products and prices from the database
+             -> reply
+```
+
+The model can be changed with `GEMINI_MODEL` (default: `gemini-2.5-flash`).
+
 ## The flow (how the pieces connect)
 
 ```
@@ -74,7 +98,8 @@ pytest tests/test_ui_selenium.py      # you will SEE Chrome open and click by it
 | File | Testing idea |
 |------|--------------|
 | `test_api.py` | Status codes (200, 201, 400, 401, 404), checking JSON data, unit vs integration test |
-| `test_chatbot.py` | Testing answers that change every time, prompt injection, hallucination, LLM-as-judge |
+| `test_chatbot.py` | Testing answers that change every time: facts, safety, prompt injection, speed |
+| `test_ai_quality.py` | Real LLM testing: no made-up products, same facts for different wordings, LLM-as-judge |
 | `test_database_and_logs.py` | Using SQL and logs to find the root cause of a bug |
 | `test_ui_selenium.py` | Locators (`By.ID`, `By.CLASS_NAME`), waits, clicking and typing |
 
@@ -96,4 +121,4 @@ Start the server, then click **Send** on each request. The **Test Results** tab 
 
 ## Tech used
 
-Python, pytest, Selenium, requests, FastAPI, SQLite, Postman, Git, GitHub Actions
+Python, pytest, Selenium, requests, FastAPI, SQLite, Google Gemini API, Postman, Git, GitHub Actions

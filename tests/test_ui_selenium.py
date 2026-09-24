@@ -71,5 +71,7 @@ def test_chat_from_the_website(driver, base_url):
     chat_box.send_keys("What is the price of keyboard?")
     driver.find_element(By.ID, "chat-send").click()
 
-    reply = wait_for(driver, By.CLASS_NAME, "bot-reply")
-    assert "1499" in reply.text
+    reply = WebDriverWait(driver, 60).until(  # a real AI can take a few seconds
+        EC.visibility_of_element_located((By.CLASS_NAME, "bot-reply"))
+    )
+    assert "1499" in reply.text.replace(",", "")

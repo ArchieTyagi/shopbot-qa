@@ -19,6 +19,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from app import llm
 from app.chatbot import get_reply
 from app.database import get_connection, setup_database
 
@@ -147,3 +148,9 @@ def chat(body: ChatRequest):
     reply = get_reply(body.message)
     log.info(f"Chat | user: {body.message!r} | bot: {reply!r}")
     return {"reply": reply}
+
+
+@app.get("/chat/mode")
+def chat_mode():
+    """Tells you if the bot is using the real AI or the simple rules."""
+    return {"mode": "ai" if llm.is_enabled() else "rules"}
