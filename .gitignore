@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+shop.db
+logs/*.log
+venv/
+.venv/

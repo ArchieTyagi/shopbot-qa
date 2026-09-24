@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ShopBot</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; padding: 0 16px; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    input { padding: 8px; margin: 4px 0; width: 100%; box-sizing: border-box; }
+    button { padding: 8px 16px; cursor: pointer; }
+    .error { color: red; }
+    .hidden { display: none; }
+    .product { padding: 6px 0; border-bottom: 1px solid #eee; }
+    #chat-log p { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>ShopBot</h1>
+
+  <!-- 1. Login -->
+  <div class="box" id="login-box">
+    <h2>Login</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button id="login-button">Login</button>
+    <p id="login-error" class="error"></p>
+  </div>
+
+  <!-- 2. Shop (shown after login) -->
+  <div id="shop" class="hidden">
+    <p id="welcome"></p>
+
+    <div class="box">
+      <h2>Products</h2>
+      <div id="product-list"></div>
+    </div>
+
+    <div class="box">
+      <h2>Ask ShopBot</h2>
+      <div id="chat-log"></div>
+      <input id="chat-input" placeholder="Ask about products, refunds, delivery...">
+      <button id="chat-send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Login button: calls POST /login
+    document.getElementById("login-button").onclick = async () => {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value,
+        }),
+      });
+      if (!res.ok) {
+        document.getElementById("login-error").textContent = "Wrong username or password";
+        return;
+      }
+      document.getElementById("login-box").classList.add("hidden");
+      document.getElementById("shop").classList.remove("hidden");
+      document.getElementById("welcome").textContent =
+        "Welcome, " + document.getElementById("username").value + "!";
+      loadProducts();
+    };
+
+    // Load products: calls GET /products
+    async function loadProducts() {
+      const res = await fetch("/products");
+      const products = await res.json();
+      document.getElementById("product-list").innerHTML = products
+        .map(p => `<div class="product">${p.name} : ₹${p.price} (${p.stock} left)</div>`)
+        .join("");
+    }
+
+    // Chat: calls POST /chat
+    document.getElementById("chat-send").onclick = async () => {
+      const input = document.getElementById("chat-input");
+      const message = input.value;
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const data = await res.json();
+      const log = document.getElementById("chat-log");
+      log.innerHTML += `<p><b>You:</b> ${message}</p>`;
+      log.innerHTML += `<p class="bot-reply"><b>ShopBot:</b> ${data.reply}</p>`;
+      input.value = "";
+    };
+  </script>
+</body>
+</html>
